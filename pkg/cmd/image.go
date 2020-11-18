@@ -84,7 +84,6 @@ func (o *ImageOptions) Run(podName string) error {
 	var kubeconfig string
 	if home := homedir.HomeDir(); home != "" {
 		if (*o.configFlags.KubeConfig == "") {
-			fmt.Println("86")
 			kubeconfig = filepath.Join(home, ".kube", "config")
 		} else {
 			kubeconfig = *o.configFlags.KubeConfig
