@@ -42,8 +42,6 @@ var (
 	errNoContext = fmt.Errorf("no context is currently set, use %q to select a new one", "kubectl config use-context <context>")
 )
 
-// ImageOptions provides information required to update
-// the current context on a user's KUBECONFIG
 type ImageOptions struct {
 	configFlags *genericclioptions.ConfigFlags
 }
