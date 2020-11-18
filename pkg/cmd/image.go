@@ -63,9 +63,10 @@ func NewCmdImage(streams genericclioptions.IOStreams) *cobra.Command {
 		Use:          "image [pod-name] [flags]",
 		Short:        "View the image for some pod",
 		Example:      fmt.Sprintf(namespaceExample, "kubectl"),
+		Args: 				cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(c *cobra.Command, args []string) error {
-			if err := o.Run(); err != nil {
+			if err := o.Run(args[0]); err != nil {
 				return err
 			}
 
@@ -79,7 +80,7 @@ func NewCmdImage(streams genericclioptions.IOStreams) *cobra.Command {
 }
 
 // Runs the command
-func (o *ImageOptions) Run() error {
+func (o *ImageOptions) Run(podName string) error {
 	var kubeconfig string
 	if home := homedir.HomeDir(); home != "" {
 		if (*o.configFlags.KubeConfig == "") {
@@ -91,33 +92,26 @@ func (o *ImageOptions) Run() error {
 	}
 
 	ns := *o.configFlags.Namespace
-
-
-	fmt.Println(*o.configFlags.Namespace)
-	// ns := flag.String("namespace", "default", "(optional) the namespace")
-	// fmt.Println(*ns)
-
-	// flag.Parse()
+	if (ns == "") {
+		ns = "default"
+	}
 
 	// use the current context in kubeconfig
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-
 	clientset, err := kubernetes.NewForConfig(config)
 
-	pods, err := clientset.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	for _, pod := range pods.Items {
-		// fmt.Println(pod.Spec.Containers)
+	pod, err := clientset.CoreV1().Pods(ns).Get(context.TODO(), podName, metav1.GetOptions{})
+	if err != nil {
+		fmt.Printf("Pod not found in the %s namespace\n", ns)
+	} else {
 		for _, container := range pod.Spec.Containers {
 			fmt.Println(container.Image)
 		}
 	}
-
-	// fmt.Println(pods.Items[0])
-	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
 
 	return nil
 }
