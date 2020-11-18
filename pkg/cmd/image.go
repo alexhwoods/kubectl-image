@@ -17,12 +17,20 @@ limitations under the License.
 package cmd
 
 import (
+	// "flag"
 	"fmt"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/tools/clientcmd/api"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
+
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
+	"context"
 )
 
 var (
@@ -37,20 +45,13 @@ var (
 // ImageOptions provides information required to update
 // the current context on a user's KUBECONFIG
 type ImageOptions struct {
-	configFlags      *genericclioptions.ConfigFlags
-	resultingContext *api.Context
-
-	rawConfig api.Config
-
-	genericclioptions.IOStreams
+	configFlags *genericclioptions.ConfigFlags
 }
 
 // NewImageOptions provides an instance of ImageOptions with default values
 func NewImageOptions(streams genericclioptions.IOStreams) *ImageOptions {
 	return &ImageOptions{
 		configFlags: genericclioptions.NewConfigFlags(true),
-
-		IOStreams: streams,
 	}
 }
 
@@ -64,12 +65,6 @@ func NewCmdImage(streams genericclioptions.IOStreams) *cobra.Command {
 		Example:      fmt.Sprintf(namespaceExample, "kubectl"),
 		SilenceUsage: true,
 		RunE: func(c *cobra.Command, args []string) error {
-			if err := o.Complete(c, args); err != nil {
-				return err
-			}
-			if err := o.Validate(); err != nil {
-				return err
-			}
 			if err := o.Run(); err != nil {
 				return err
 			}
@@ -83,30 +78,46 @@ func NewCmdImage(streams genericclioptions.IOStreams) *cobra.Command {
 	return cmd
 }
 
-// Complete sets all information required for updating the current context
-func (o *ImageOptions) Complete(cmd *cobra.Command, args []string) error {
-	o.resultingContext.Namespace, _ = cmd.Flags().GetString("namespace")
-
-	return nil
-}
-
-// Validate ensures that all required arguments and flag values are provided
-func (o *ImageOptions) Validate() error {
-	return nil
-}
-
 // Runs the command
 func (o *ImageOptions) Run() error {
-	fmt.Print(o)
-	// o.
-	// fmt.Print(&(o.configFlags.KubeConfig))
+	var kubeconfig string
+	if home := homedir.HomeDir(); home != "" {
+		if (*o.configFlags.KubeConfig == "") {
+			fmt.Println("86")
+			kubeconfig = filepath.Join(home, ".kube", "config")
+		} else {
+			kubeconfig = *o.configFlags.KubeConfig
+		}
+	}
 
-	// var kubeconfig *string
-	// if home := homedir.HomeDir(); home != "" {
-	// 	kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	// } else {
-	// 	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	// }
+	ns := *o.configFlags.Namespace
+
+
+	fmt.Println(*o.configFlags.Namespace)
+	// ns := flag.String("namespace", "default", "(optional) the namespace")
+	// fmt.Println(*ns)
+
+	// flag.Parse()
+
+	// use the current context in kubeconfig
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+
+	clientset, err := kubernetes.NewForConfig(config)
+
+	pods, err := clientset.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, pod := range pods.Items {
+		// fmt.Println(pod.Spec.Containers)
+		for _, container := range pod.Spec.Containers {
+			fmt.Println(container.Image)
+		}
+	}
+
+	// fmt.Println(pods.Items[0])
+	fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
 
 	return nil
 }
