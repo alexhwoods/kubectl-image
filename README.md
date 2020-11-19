@@ -26,7 +26,7 @@ foo-image
 
 ```sh
 # assumes you have a working KUBECONFIG
-$ GO111MODULE="on" go build cmd/kubectl-ns.go
+$ GO111MODULE="on" go build cmd/kubectl-image.go
 # place the built binary somewhere in your PATH
 $ cp ./kubectl-image /usr/local/bin
 
