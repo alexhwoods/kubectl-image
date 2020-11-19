@@ -32,6 +32,7 @@ $ cp ./kubectl-image /usr/local/bin
 
 
 $ kubectl image foo -n prod
+foo-image
 ```
 
 ## Cleanup
