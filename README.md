@@ -18,7 +18,7 @@ Built using Go version go1.15.5 darwin/amd64
 ## Example
 
 ```sh
-kubectl image foo --namespace prod
+$ kubectl image foo --namespace prod
 foo-image
 ```
 
