@@ -13,6 +13,8 @@ This plugin uses the [client-go library](https://github.com/kubernetes/client-go
 
 Nothing is modified. Context is not switched, etc.
 
+Built using Go version go1.15.5 darwin/amd64
+
 ## Example
 
 kubectl image foo --namespace prod
